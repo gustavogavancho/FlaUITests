@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="UITests/UITests.csproj" />
+  <Project Path="UITestsnUnit/UITestsnUnit.csproj" />
+  <Project Path="UITestsxUnit/UITestsxUnit.csproj" />
+</Solution>
