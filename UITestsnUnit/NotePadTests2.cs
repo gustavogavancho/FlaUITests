@@ -185,9 +185,8 @@ public class NotepadTests2
             () =>
             {
                 FocusEditorForTyping(editor);
-                ClearEditor();
-                Keyboard.Type(expectedText);
-                Wait.UntilInputIsProcessed();
+                ClearEditor(editor);
+                WriteTextToEditor(editor, expectedText);
 
                 return string.Equals(TryGetEditorText(editor), expectedText, StringComparison.Ordinal);
             },
@@ -206,17 +205,25 @@ public class NotepadTests2
     {
         editor.Focus();
         Wait.UntilInputIsProcessed();
-
-        var bounds = editor.BoundingRectangle;
-        if (!bounds.IsEmpty)
-        {
-            Mouse.Click(bounds.Center());
-            Wait.UntilInputIsProcessed();
-        }
     }
 
-    private static void ClearEditor()
+    private static void ClearEditor(AutomationElement editor)
     {
+        try
+        {
+            var valuePattern = editor.Patterns.Value.PatternOrDefault;
+            if (valuePattern is not null && !valuePattern.IsReadOnly.Value)
+            {
+                valuePattern.SetValue(string.Empty);
+                Wait.UntilInputIsProcessed();
+                return;
+            }
+        }
+        catch
+        {
+            // Ignorar y usar fallback por teclado
+        }
+
         Keyboard.Press(VirtualKeyShort.CONTROL);
         Keyboard.Press(VirtualKeyShort.KEY_A);
         Keyboard.Release(VirtualKeyShort.KEY_A);
@@ -225,6 +232,38 @@ public class NotepadTests2
 
         Keyboard.Press(VirtualKeyShort.DELETE);
         Keyboard.Release(VirtualKeyShort.DELETE);
+        Wait.UntilInputIsProcessed();
+    }
+
+    private static void WriteTextToEditor(AutomationElement editor, string expectedText)
+    {
+        try
+        {
+            var valuePattern = editor.Patterns.Value.PatternOrDefault;
+            if (valuePattern is not null && !valuePattern.IsReadOnly.Value)
+            {
+                valuePattern.SetValue(expectedText);
+                Wait.UntilInputIsProcessed();
+                return;
+            }
+        }
+        catch
+        {
+            // Ignorar y usar fallback
+        }
+
+        try
+        {
+            editor.AsTextBox().Enter(expectedText);
+            Wait.UntilInputIsProcessed();
+            return;
+        }
+        catch
+        {
+            // Ignorar y usar fallback
+        }
+
+        Keyboard.Type(expectedText);
         Wait.UntilInputIsProcessed();
     }
 
